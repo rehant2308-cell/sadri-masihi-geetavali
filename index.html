@@ -29,89 +29,43 @@ button{cursor:pointer}.detail{display:none}.back,.secondary{border:0;background:
 <section id="listView"><div class="section-title">गीतों की सूची</div><input id="search" class="search" placeholder="गीत का नाम खोजें..." autocomplete="off"><div id="songList"></div></section>
 <section id="detailView" class="detail"><button class="back" id="backBtn">← गीत सूची</button><h2 id="songTitle"></h2><div class="lyrics" id="songLyrics"></div></section>
 <details class="admin"><summary>🔐 मालिक / Admin सेटिंग</summary>
-<div id="locked" class="panel"><p><b>केवल मालिक के लिए</b></p><input id="pinInput" type="password" inputmode="numeric" placeholder="Admin PIN डालें"><button class="primary" id="unlockBtn">लॉगिन</button><p class="small">पहली बार का PIN: 2468 — लॉगिन के बाद इसे बदलें।</p></div>
-<div id="adminPanel" class="hidden">
-<div class="panel"><b>गीत जोड़ें / एडिट करें</b><input id="songTitleInput" placeholder="गीत का नाम"><textarea id="songLyricsInput" rows="9" placeholder="गीत के पूरे बोल"></textarea><div class="row"><button class="primary" id="saveSong">सेव करें</button><button class="secondary" id="cancelEdit">रद्द करें</button></div><div id="adminSongList"></div></div>
-<div class="panel"><b>ऐप का वॉलपेपर बदलें</b><input id="wallpaperInput" type="file" accept="image/*"><button class="secondary" id="clearWallpaper">वॉलपेपर हटाएँ</button><p class="small">चुनी गई तस्वीर इसी डिवाइस के ऐप में बैकग्राउंड बनेगी।</p></div>
-<div class="panel"><b>Admin PIN बदलें</b><input id="newPin" type="password" inputmode="numeric" placeholder="नया PIN (कम से कम 4 अंक)"><button class="primary" id="changePin">PIN बदलें</button><button class="secondary" id="logoutBtn">लॉगआउट</button></div>
-<p class="small">महत्वपूर्ण: यह ऑफलाइन प्रोटोटाइप है। गीत, PIN और वॉलपेपर इसी मोबाइल/ब्राउज़र में सेव होते हैं। अलग-अलग लोगों के मोबाइल पर एक ही अपडेट पहुँचाने और मजबूत मालिक-आधारित अनुमति के लिए Firebase Authentication + Firestore/Storage जोड़कर सर्वर पर Admin account बनाना जरूरी है।</p>
-</div></details>
+<div id="loginBox" class="panel"><p><b>केवल मालिक के लिए लॉगिन</b></p><input id="emailInput" type="email" placeholder="Admin ईमेल"><input id="passwordInput" type="password" placeholder="पासवर्ड"><button class="primary" id="loginBtn">लॉगिन</button><p class="small">मालिक का ईमेल: rehant2308@gmail.com</p></div>
+<div id="adminPanel" class="hidden"><div class="panel"><b>गीत जोड़ें / एडिट करें</b><input id="songTitleInput" placeholder="गीत का नाम"><textarea id="songLyricsInput" rows="9" placeholder="गीत के पूरे बोल"></textarea><div class="row"><button class="primary" id="saveSong">सेव करें</button><button class="secondary" id="cancelEdit">रद्द करें</button></div><div id="adminSongList"></div></div>
+<div class="panel"><b>ऐप का वॉलपेपर बदलें</b><input id="wallpaperInput" type="file" accept="image/*"><button class="secondary" id="clearWallpaper">वॉलपेपर हटाएँ</button><p class="small">वॉलपेपर सभी उपयोगकर्ताओं के लिए बदलेगा।</p></div><div class="panel"><button class="secondary" id="logoutBtn">लॉगआउट</button></div></div></details>
+<p id="status" class="small" role="status"></p>
 </main><footer>सादरी मसीही गीतावली</footer>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-storage-compat.js"></script>
 <script>
+const firebaseConfig={apiKey:"AIzaSyBmQ9x-cBYvhABEyEFwfLKwDc4S3w9kXSw",authDomain:"sadri-masihee-geetavali.firebaseapp.com",projectId:"sadri-masihee-geetavali",storageBucket:"sadri-masihee-geetavali.firebasestorage.app",messagingSenderId:"417759941995",appId:"1:417759941995:web:0d80e7ac8ac0f0bc00a82e",measurementId:"G-GDMLPWFBNV"};
+firebase.initializeApp(firebaseConfig);
+const auth=firebase.auth(), db=firebase.firestore(), storage=firebase.storage();
+const OWNER='rehant2308@gmail.com';
 const starter=[
-{title:"यीशु मोके प्यार करेला",lyrics:`यीशु मोके प्यार करेला
-
-अनन्त जीवन डहरे डहरे,
-मसीह मोके प्यार करेला।
-
-1. प्रार्थना कईर के यीशु के पाओना पाओना।
-   प्रार्थना कईर के मसीह के पाओना।
-
-2. समाज जाइके यीशु के पाओना पाओना।
-   समाज जाइके मसीह के पाओना।
-
-3. गिरजा जाइके यीशु के पाओना पाओना।
-   गिरजा जाइके मसीह के पाओना।
-
-4. बिनती कईर के यीशु के पाओना पाओना।
-   बिनती कईर के मसीह के पाओना।`},
-{title:"जीवन डहर यीशु हेके मोर",lyrics:`कोरस:
-जीवन डहर यीशु हेके मोर।
-जीवन डहर मसीह हेके मोर।
-डहर-डहर लेई चलेला।
-
-1. प्रभु यीशु कहेला रे,
-   मार्ग सत्य जीवन मोहे हेको। (2)
-
-2. प्रभु यीशु कहेला रे,
-   जीवन कर ज्योति मोहे हेको। (2)
-
-3. प्रभु यीशु कहेला रे,
-   भला चरवाहा मोहे हेको। (2)
-
-4. प्रभु यीशु कहेला रे,
-   स्वर्ग कर दुरा मोहे हेको। (2)`},
-{title:"प्रभु यीशु तोय मोके",lyrics:`कोरस:
-प्रभु यीशु तोय मोके,
-जिन्दगी भर ना छोड़बे। (2)
-
-1. चोरी-हारी छोड़ देलों,
-   तोर सेवा करेक ले। (2)
-
-2. पाप-बुराई छोड़ देलों,
-   तोर सेवा करेक ले। (2)
-
-3. लोभ-लालच छोइड़ देलों,
-   तोर सेवा करेक ले। (2)
-
-4. हड़िया-दारू छोइड़ देलों,
-   तोर सेवा करेक ले। (2)
-
-5. अपने के सौंइप देलों,
-   तोर सेवा करेक ले। (2)`}
+{title:"यीशु मोके प्यार करेला",lyrics:`यीशु मोके प्यार करेला\n\nअनन्त जीवन डहरे डहरे,\nमसीह मोके प्यार करेला।\n\n1. प्रार्थना कईर के यीशु के पाओना पाओना।\n   प्रार्थना कईर के मसीह के पाओना।\n\n2. समाज जाइके यीशु के पाओना पाओना।\n   समाज जाइके मसीह के पाओना।\n\n3. गिरजा जाइके यीशु के पाओना पाओना।\n   गिरजा जाइके मसीह के पाओना।\n\n4. बिनती कईर के यीशु के पाओना पाओना।\n   बिनती कईर के मसीह के पाओना।`},
+{title:"जीवन डहर यीशु हेके मोर",lyrics:`कोरस:\nजीवन डहर यीशु हेके मोर।\nजीवन डहर मसीह हेके मोर।\nडहर-डहर लेई चलेला।\n\n1. प्रभु यीशु कहेला रे,\n   मार्ग सत्य जीवन मोहे हेको। (2)\n\n2. प्रभु यीशु कहेला रे,\n   जीवन कर ज्योति मोहे हेको। (2)\n\n3. प्रभु यीशु कहेला रे,\n   भला चरवाहा मोहे हेको। (2)\n\n4. प्रभु यीशु कहेला रे,\n   स्वर्ग कर दुरा मोहे हेको। (2)`},
+{title:"प्रभु यीशु तोय मोके",lyrics:`कोरस:\nप्रभु यीशु तोय मोके,\nजिन्दगी भर ना छोड़बे। (2)\n\n1. चोरी-हारी छोड़ देलों,\n   तोर सेवा करेक ले। (2)\n\n2. पाप-बुराई छोड़ देलों,\n   तोर सेवा करेक ले। (2)\n\n3. लोभ-लालच छोइड़ देलों,\n   तोर सेवा करेक ले। (2)\n\n4. हड़िया-दारू छोइड़ देलों,\n   तोर सेवा करेक ले। (2)\n\n5. अपने के सौंइप देलों,\n   तोर सेवा करेक ले। (2)`}
 ];
-const KEY='sadri_owner_songs_v1', PINKEY='sadri_admin_pin_v1', WALL='sadri_wallpaper_v1';
-let songs=JSON.parse(localStorage.getItem(KEY)||'null')||starter.slice(), editing=-1;
+let songs=[],editingId=null,isOwner=false;
 const $=id=>document.getElementById(id);
-function persist(){localStorage.setItem(KEY,JSON.stringify(songs));}
-function render(){
- let q=$('search').value.trim().toLowerCase();$('songList').innerHTML='';
- let found=songs.map((s,i)=>({...s,i})).filter(s=>s.title.toLowerCase().includes(q));
- if(!found.length){$('songList').textContent='कोई गीत नहीं मिला।';return;}
- found.forEach(s=>{let b=document.createElement('button');b.className='song';b.innerHTML=`<span class="num">${s.i+1}</span><span><span class="song-name"></span><div class="sub">पूरा गीत पढ़ने के लिए छुएँ</div></span>`;b.querySelector('.song-name').textContent=s.title;b.onclick=()=>openSong(s.i);$('songList').appendChild(b);});
-}
-function openSong(i){$('songTitle').textContent=songs[i].title;$('songLyrics').textContent=songs[i].lyrics;$('listView').style.display='none';$('detailView').style.display='block';scrollTo(0,0);}
+function msg(s){$('status').textContent=s;}
+function render(){const q=$('search').value.trim().toLowerCase();$('songList').innerHTML='';songs.filter(s=>s.title.toLowerCase().includes(q)).forEach((s,i)=>{const b=document.createElement('button');b.className='song';b.innerHTML=`<span class="num">${i+1}</span><span><span class="song-name"></span><div class="sub">पूरा गीत पढ़ने के लिए छुएँ</div></span>`;b.querySelector('.song-name').textContent=s.title;b.onclick=()=>openSong(s.id);$('songList').appendChild(b);});if(!songs.length)$('songList').textContent='अभी कोई गीत उपलब्ध नहीं है।';}
+function openSong(id){const s=songs.find(x=>x.id===id);if(!s)return;$('songTitle').textContent=s.title;$('songLyrics').textContent=s.lyrics;$('listView').style.display='none';$('detailView').style.display='block';scrollTo(0,0);}
 function showList(){$('detailView').style.display='none';$('listView').style.display='block';scrollTo(0,0);}
 $('backBtn').onclick=showList;$('search').oninput=render;
-function adminOn(){ $('locked').classList.add('hidden');$('adminPanel').classList.remove('hidden');renderAdmin();}
-function renderAdmin(){let box=$('adminSongList');box.innerHTML='';songs.forEach((s,i)=>{let d=document.createElement('div');d.className='panel';let name=document.createElement('b');name.textContent=(i+1)+'. '+s.title;let edit=document.createElement('button');edit.className='secondary';edit.textContent='एडिट';edit.onclick=()=>{editing=i;$('songTitleInput').value=s.title;$('songLyricsInput').value=s.lyrics;};let del=document.createElement('button');del.className='danger';del.textContent='डिलीट';del.onclick=()=>{if(confirm('क्या यह गीत हटाना है?')){songs.splice(i,1);persist();render();renderAdmin();}};d.append(name,edit,del);box.append(d);});}
-$('unlockBtn').onclick=()=>{let pin=localStorage.getItem(PINKEY)||'2468';if($('pinInput').value===pin){adminOn();$('pinInput').value='';}else alert('गलत PIN');};
-$('saveSong').onclick=()=>{let title=$('songTitleInput').value.trim(),lyrics=$('songLyricsInput').value.trim();if(!title||!lyrics){alert('गीत का नाम और पूरे बोल लिखें।');return;}if(editing<0)songs.push({title,lyrics});else songs[editing]={title,lyrics};persist();editing=-1;$('songTitleInput').value='';$('songLyricsInput').value='';render();renderAdmin();alert('गीत सेव हो गया।');};
-$('cancelEdit').onclick=()=>{editing=-1;$('songTitleInput').value='';$('songLyricsInput').value='';};
-$('changePin').onclick=()=>{let p=$('newPin').value.trim();if(p.length<4){alert('कम से कम 4 अंक का PIN रखें।');return;}localStorage.setItem(PINKEY,p);$('newPin').value='';alert('इस डिवाइस का PIN बदल गया।');};
-$('logoutBtn').onclick=()=>{$('adminPanel').classList.add('hidden');$('locked').classList.remove('hidden');};
-$('wallpaperInput').onchange=e=>{let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{localStorage.setItem(WALL,r.result);document.body.style.backgroundImage=`url("${r.result}")`;}catch(err){alert('तस्वीर बहुत बड़ी है। छोटी तस्वीर चुनें।');}};r.readAsDataURL(f);};
-$('clearWallpaper').onclick=()=>{localStorage.removeItem(WALL);document.body.style.backgroundImage='';$('wallpaperInput').value='';};
-let savedWall=localStorage.getItem(WALL);if(savedWall)document.body.style.backgroundImage=`url("${savedWall}")`;
-render();
-</script></body></html>
+async function loadSongs(){try{const snap=await db.collection('songs').orderBy('createdAt').get();songs=snap.docs.map(d=>({id:d.id,...d.data()}));render();if(!songs.length)msg('गीत अभी डेटाबेस में नहीं हैं। Admin लॉगिन करके गीत जोड़ें।');else msg('गीत ऑनलाइन अपडेट हो रहे हैं।');}catch(e){msg('डेटाबेस लोड नहीं हुआ: '+e.message);}}
+function renderAdmin(){const box=$('adminSongList');box.innerHTML='';songs.forEach((s,i)=>{const d=document.createElement('div');d.className='panel';const name=document.createElement('b');name.textContent=(i+1)+'. '+s.title;const edit=document.createElement('button');edit.className='secondary';edit.textContent='एडिट';edit.onclick=()=>{editingId=s.id;$('songTitleInput').value=s.title;$('songLyricsInput').value=s.lyrics;};const del=document.createElement('button');del.className='danger';del.textContent='डिलीट';del.onclick=async()=>{if(confirm('क्या यह गीत सभी के लिए हटाना है?')){try{await db.collection('songs').doc(s.id).delete();await loadSongs();renderAdmin();msg('गीत सभी के लिए डिलीट हो गया।');}catch(e){alert(e.message);}}};d.append(name,edit,del);box.append(d);});}
+$('loginBtn').onclick=async()=>{const email=$('emailInput').value.trim().toLowerCase(),pass=$('passwordInput').value;if(email!==OWNER){alert('यह Admin ईमेल नहीं है।');return;}try{await auth.signInWithEmailAndPassword(email,pass);}catch(e){alert('लॉगिन नहीं हुआ: '+e.message);}};
+$('logoutBtn').onclick=()=>auth.signOut();
+auth.onAuthStateChanged(async user=>{isOwner=!!user&&user.email===OWNER&&user.emailVerified;$('loginBox').classList.toggle('hidden',isOwner);$('adminPanel').classList.toggle('hidden',!isOwner);if(isOwner){renderAdmin();msg('Admin लॉगिन सफल।');}else if(user){await auth.signOut();alert('केवल सत्यापित मालिक ईमेल को अनुमति है।');}});
+$('saveSong').onclick=async()=>{if(!isOwner)return;const title=$('songTitleInput').value.trim(),lyrics=$('songLyricsInput').value.trim();if(!title||!lyrics){alert('गीत का नाम और बोल लिखें।');return;}try{const data={title,lyrics,updatedAt:firebase.firestore.FieldValue.serverTimestamp()};if(editingId)await db.collection('songs').doc(editingId).update(data);else await db.collection('songs').add({...data,createdAt:firebase.firestore.FieldValue.serverTimestamp()});editingId=null;$('songTitleInput').value='';$('songLyricsInput').value='';await loadSongs();renderAdmin();msg('गीत सभी उपयोगकर्ताओं के लिए सेव हो गया।');}catch(e){alert('सेव नहीं हुआ: '+e.message);}};
+$('cancelEdit').onclick=()=>{editingId=null;$('songTitleInput').value='';$('songLyricsInput').value='';};
+$('wallpaperInput').onchange=async e=>{if(!isOwner)return;const f=e.target.files[0];if(!f)return;if(f.size>5*1024*1024){alert('5 MB से छोटी तस्वीर चुनें।');return;}try{const ref=storage.ref('wallpaper/main-'+Date.now());await ref.put(f);const url=await ref.getDownloadURL();await db.collection('settings').doc('app').set({wallpaper:url,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});document.body.style.backgroundImage=`url("${url}")`;msg('वॉलपेपर सभी के लिए अपडेट हो गया।');}catch(err){alert('वॉलपेपर अपलोड नहीं हुआ: '+err.message);}};
+$('clearWallpaper').onclick=async()=>{if(!isOwner)return;try{await db.collection('settings').doc('app').set({wallpaper:''},{merge:true});document.body.style.backgroundImage='';msg('वॉलपेपर हट गया।');}catch(e){alert(e.message);}};
+async function loadWallpaper(){try{const d=await db.collection('settings').doc('app').get();if(d.exists&&d.data().wallpaper)document.body.style.backgroundImage=`url("${d.data().wallpaper}")`;}catch(e){}}
+loadSongs();loadWallpaper();
+</script>
+
+</body></html>
