@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#173b63"><title>सादरी मसीही गीतावली</title>
+<style>
+:root{--navy:#173b63;--gold:#f2c46d;--ink:#182536;--panel:rgba(255,255,255,.94)}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,"Noto Sans Devanagari",sans-serif;color:var(--ink);background:#eef2f7;background-size:cover;background-position:center;background-attachment:fixed}
+body:before{content:"";position:fixed;inset:0;background:rgba(245,247,251,.88);z-index:-1}
+header{background:linear-gradient(145deg,#173b63,#28618d);color:white;padding:25px 18px 22px;border-radius:0 0 24px 24px}
+header .eyebrow{font-size:12px;letter-spacing:1.3px;color:#f7d99c}h1{font-size:24px;margin:8px 0}header p{margin:0;color:#e5edf5;font-size:14px}
+main{max-width:720px;margin:auto;padding:17px}.section-title{font-size:17px;font-weight:700;margin:20px 2px 12px}
+.search,input,textarea{width:100%;padding:13px;border:1px solid #d9e0e8;border-radius:11px;font:inherit;background:white;margin:7px 0}
+.song{display:flex;align-items:center;gap:13px;background:var(--panel);padding:15px;margin:10px 0;border-radius:14px;border:1px solid #edf0f4;width:100%;text-align:left;color:inherit;font:inherit}
+.num{width:38px;height:38px;display:grid;place-items:center;border-radius:11px;background:#eaf1f8;color:var(--navy);font-weight:700;flex-shrink:0}
+.song-name{font-weight:700;font-size:16px}.sub{font-size:12px;color:#748195;margin-top:3px}
+button{cursor:pointer}.detail{display:none}.back,.secondary{border:0;background:#e8eff6;color:var(--navy);padding:10px 14px;border-radius:10px;font-weight:650}
+.detail h2{font-size:22px;margin:20px 0 14px}.lyrics{white-space:pre-wrap;line-height:2;font-size:18px;background:var(--panel);border-radius:16px;padding:20px;border:1px solid #edf0f4;min-height:180px}
+.admin{margin-top:22px;border-top:1px solid #dce3eb;padding-top:15px}.admin summary{color:#53657a;font-size:14px;font-weight:650;cursor:pointer}
+.primary{background:var(--navy);color:white;border:0;padding:12px 16px;border-radius:10px;font-weight:650;margin:5px 4px 5px 0}
+.danger{background:#a12e36;color:white;border:0;padding:10px 13px;border-radius:9px;margin:5px}
+.row{display:flex;gap:8px;flex-wrap:wrap}.row>*{flex:1}
+.panel{background:var(--panel);padding:13px;border-radius:13px;margin:12px 0;border:1px solid #e4e9ef}
+.small{font-size:12px;color:#66758a;line-height:1.6}.hidden{display:none!important}footer{text-align:center;color:#8491a2;font-size:12px;padding:25px}
+</style></head>
+<body>
+<header><div class="eyebrow">🎵 SADRI CHRISTIAN SONGS</div><h1>सादरी मसीही गीतावली</h1><p>प्रभु की स्तुति के गीत — पढ़ें और गाएँ</p></header>
+<main>
+<section id="listView"><div class="section-title">गीतों की सूची</div><input id="search" class="search" placeholder="गीत का नाम खोजें..." autocomplete="off"><div id="songList"></div></section>
+<section id="detailView" class="detail"><button class="back" id="backBtn">← गीत सूची</button><h2 id="songTitle"></h2><div class="lyrics" id="songLyrics"></div></section>
+<details class="admin"><summary>🔐 मालिक / Admin सेटिंग</summary>
+<div id="locked" class="panel"><p><b>केवल मालिक के लिए</b></p><input id="pinInput" type="password" inputmode="numeric" placeholder="Admin PIN डालें"><button class="primary" id="unlockBtn">लॉगिन</button><p class="small">पहली बार का PIN: 2468 — लॉगिन के बाद इसे बदलें।</p></div>
+<div id="adminPanel" class="hidden">
+<div class="panel"><b>गीत जोड़ें / एडिट करें</b><input id="songTitleInput" placeholder="गीत का नाम"><textarea id="songLyricsInput" rows="9" placeholder="गीत के पूरे बोल"></textarea><div class="row"><button class="primary" id="saveSong">सेव करें</button><button class="secondary" id="cancelEdit">रद्द करें</button></div><div id="adminSongList"></div></div>
+<div class="panel"><b>ऐप का वॉलपेपर बदलें</b><input id="wallpaperInput" type="file" accept="image/*"><button class="secondary" id="clearWallpaper">वॉलपेपर हटाएँ</button><p class="small">चुनी गई तस्वीर इसी डिवाइस के ऐप में बैकग्राउंड बनेगी।</p></div>
+<div class="panel"><b>Admin PIN बदलें</b><input id="newPin" type="password" inputmode="numeric" placeholder="नया PIN (कम से कम 4 अंक)"><button class="primary" id="changePin">PIN बदलें</button><button class="secondary" id="logoutBtn">लॉगआउट</button></div>
+<p class="small">महत्वपूर्ण: यह ऑफलाइन प्रोटोटाइप है। गीत, PIN और वॉलपेपर इसी मोबाइल/ब्राउज़र में सेव होते हैं। अलग-अलग लोगों के मोबाइल पर एक ही अपडेट पहुँचाने और मजबूत मालिक-आधारित अनुमति के लिए Firebase Authentication + Firestore/Storage जोड़कर सर्वर पर Admin account बनाना जरूरी है।</p>
+</div></details>
+</main><footer>सादरी मसीही गीतावली</footer>
+<script>
+const starter=[
+{title:"यीशु मोके प्यार करेला",lyrics:`यीशु मोके प्यार करेला
+
+अनन्त जीवन डहरे डहरे,
+मसीह मोके प्यार करेला।
+
+1. प्रार्थना कईर के यीशु के पाओना पाओना।
+   प्रार्थना कईर के मसीह के पाओना।
+
+2. समाज जाइके यीशु के पाओना पाओना।
+   समाज जाइके मसीह के पाओना।
+
+3. गिरजा जाइके यीशु के पाओना पाओना।
+   गिरजा जाइके मसीह के पाओना।
+
+4. बिनती कईर के यीशु के पाओना पाओना।
+   बिनती कईर के मसीह के पाओना।`},
+{title:"जीवन डहर यीशु हेके मोर",lyrics:`कोरस:
+जीवन डहर यीशु हेके मोर।
+जीवन डहर मसीह हेके मोर।
+डहर-डहर लेई चलेला।
+
+1. प्रभु यीशु कहेला रे,
+   मार्ग सत्य जीवन मोहे हेको। (2)
+
+2. प्रभु यीशु कहेला रे,
+   जीवन कर ज्योति मोहे हेको। (2)
+
+3. प्रभु यीशु कहेला रे,
+   भला चरवाहा मोहे हेको। (2)
+
+4. प्रभु यीशु कहेला रे,
+   स्वर्ग कर दुरा मोहे हेको। (2)`},
+{title:"प्रभु यीशु तोय मोके",lyrics:`कोरस:
+प्रभु यीशु तोय मोके,
+जिन्दगी भर ना छोड़बे। (2)
+
+1. चोरी-हारी छोड़ देलों,
+   तोर सेवा करेक ले। (2)
+
+2. पाप-बुराई छोड़ देलों,
+   तोर सेवा करेक ले। (2)
+
+3. लोभ-लालच छोइड़ देलों,
+   तोर सेवा करेक ले। (2)
+
+4. हड़िया-दारू छोइड़ देलों,
+   तोर सेवा करेक ले। (2)
+
+5. अपने के सौंइप देलों,
+   तोर सेवा करेक ले। (2)`}
+];
+const KEY='sadri_owner_songs_v1', PINKEY='sadri_admin_pin_v1', WALL='sadri_wallpaper_v1';
+let songs=JSON.parse(localStorage.getItem(KEY)||'null')||starter.slice(), editing=-1;
+const $=id=>document.getElementById(id);
+function persist(){localStorage.setItem(KEY,JSON.stringify(songs));}
+function render(){
+ let q=$('search').value.trim().toLowerCase();$('songList').innerHTML='';
+ let found=songs.map((s,i)=>({...s,i})).filter(s=>s.title.toLowerCase().includes(q));
+ if(!found.length){$('songList').textContent='कोई गीत नहीं मिला।';return;}
+ found.forEach(s=>{let b=document.createElement('button');b.className='song';b.innerHTML=`<span class="num">${s.i+1}</span><span><span class="song-name"></span><div class="sub">पूरा गीत पढ़ने के लिए छुएँ</div></span>`;b.querySelector('.song-name').textContent=s.title;b.onclick=()=>openSong(s.i);$('songList').appendChild(b);});
+}
+function openSong(i){$('songTitle').textContent=songs[i].title;$('songLyrics').textContent=songs[i].lyrics;$('listView').style.display='none';$('detailView').style.display='block';scrollTo(0,0);}
+function showList(){$('detailView').style.display='none';$('listView').style.display='block';scrollTo(0,0);}
+$('backBtn').onclick=showList;$('search').oninput=render;
+function adminOn(){ $('locked').classList.add('hidden');$('adminPanel').classList.remove('hidden');renderAdmin();}
+function renderAdmin(){let box=$('adminSongList');box.innerHTML='';songs.forEach((s,i)=>{let d=document.createElement('div');d.className='panel';let name=document.createElement('b');name.textContent=(i+1)+'. '+s.title;let edit=document.createElement('button');edit.className='secondary';edit.textContent='एडिट';edit.onclick=()=>{editing=i;$('songTitleInput').value=s.title;$('songLyricsInput').value=s.lyrics;};let del=document.createElement('button');del.className='danger';del.textContent='डिलीट';del.onclick=()=>{if(confirm('क्या यह गीत हटाना है?')){songs.splice(i,1);persist();render();renderAdmin();}};d.append(name,edit,del);box.append(d);});}
+$('unlockBtn').onclick=()=>{let pin=localStorage.getItem(PINKEY)||'2468';if($('pinInput').value===pin){adminOn();$('pinInput').value='';}else alert('गलत PIN');};
+$('saveSong').onclick=()=>{let title=$('songTitleInput').value.trim(),lyrics=$('songLyricsInput').value.trim();if(!title||!lyrics){alert('गीत का नाम और पूरे बोल लिखें।');return;}if(editing<0)songs.push({title,lyrics});else songs[editing]={title,lyrics};persist();editing=-1;$('songTitleInput').value='';$('songLyricsInput').value='';render();renderAdmin();alert('गीत सेव हो गया।');};
+$('cancelEdit').onclick=()=>{editing=-1;$('songTitleInput').value='';$('songLyricsInput').value='';};
+$('changePin').onclick=()=>{let p=$('newPin').value.trim();if(p.length<4){alert('कम से कम 4 अंक का PIN रखें।');return;}localStorage.setItem(PINKEY,p);$('newPin').value='';alert('इस डिवाइस का PIN बदल गया।');};
+$('logoutBtn').onclick=()=>{$('adminPanel').classList.add('hidden');$('locked').classList.remove('hidden');};
+$('wallpaperInput').onchange=e=>{let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{localStorage.setItem(WALL,r.result);document.body.style.backgroundImage=`url("${r.result}")`;}catch(err){alert('तस्वीर बहुत बड़ी है। छोटी तस्वीर चुनें।');}};r.readAsDataURL(f);};
+$('clearWallpaper').onclick=()=>{localStorage.removeItem(WALL);document.body.style.backgroundImage='';$('wallpaperInput').value='';};
+let savedWall=localStorage.getItem(WALL);if(savedWall)document.body.style.backgroundImage=`url("${savedWall}")`;
+render();
+</script></body></html>
